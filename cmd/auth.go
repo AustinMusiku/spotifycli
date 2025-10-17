@@ -23,8 +23,18 @@ var loginCmd = &cobra.Command{
 	},
 }
 
+var logoutCmd = &cobra.Command{
+	Use:   "logout",
+	Short: "Clear authentication credentials",
+	Long:  `Clear stored authentication credentials and log out from Spotify.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runLogout()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(loginCmd)
+	rootCmd.AddCommand(logoutCmd)
 }
 
 func runLogin() error {
@@ -105,6 +115,21 @@ func runLogin() error {
 	}
 
 	ui.PrintSuccess("Successfully authenticated with Spotify!")
+	return nil
+}
+
+func runLogout() error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	cfg.ClearTokens()
+	if err := cfg.Save(); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
+	}
+
+	ui.PrintSuccess("Successfully logged out from Spotify")
 	return nil
 }
 
