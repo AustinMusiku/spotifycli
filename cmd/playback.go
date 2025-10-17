@@ -32,13 +32,25 @@ var pauseCmd = &cobra.Command{
 	},
 }
 
+// nextCmd represents the next command
+var nextCmd = &cobra.Command{
+	Use:   "next",
+	Short: "Skip to next track",
+	Long:  `Skip to the next track in the current queue.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runNext()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playCmd)
 	rootCmd.AddCommand(pauseCmd)
+	rootCmd.AddCommand(nextCmd)
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
 	pauseCmd.Aliases = []string{"p"}
+	nextCmd.Aliases = []string{"n"}
 }
 
 func runPlay(args []string) error {
@@ -120,6 +132,29 @@ func runPause() error {
 	}
 
 	ui.PrintSuccess("Paused playback")
+	return nil
+}
+
+func runNext() error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	playbackService := api.NewPlaybackService(client)
+	ctx := context.Background()
+
+	deviceID, err := getActiveDevice(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	err = playbackService.Next(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSuccess("Skipped to next track")
 	return nil
 }
 
