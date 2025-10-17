@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/AustinMusiku/spotifycli/internal/api"
@@ -52,11 +53,23 @@ var previousCmd = &cobra.Command{
 	},
 }
 
+// volumeCmd represents the volume command
+var volumeCmd = &cobra.Command{
+	Use:   "volume <0-100>",
+	Short: "Set volume",
+	Long:  `Set the volume for the active device (0-100).`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runVolume(args[0])
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playCmd)
 	rootCmd.AddCommand(pauseCmd)
 	rootCmd.AddCommand(nextCmd)
 	rootCmd.AddCommand(previousCmd)
+	rootCmd.AddCommand(volumeCmd)
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
@@ -190,6 +203,38 @@ func runPrevious() error {
 	}
 
 	ui.PrintSuccess("Went to previous track")
+	return nil
+}
+
+func runVolume(volumeStr string) error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	volume, err := strconv.Atoi(volumeStr)
+	if err != nil {
+		return fmt.Errorf("invalid volume: %s (must be a number)", volumeStr)
+	}
+
+	if volume < 0 || volume > 100 {
+		return fmt.Errorf("volume must be between 0 and 100")
+	}
+
+	playbackService := api.NewPlaybackService(client)
+	ctx := context.Background()
+
+	deviceID, err := getActiveDevice(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	err = playbackService.SetVolume(ctx, deviceID, volume)
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSuccess(fmt.Sprintf("Set volume to %d%%", volume))
 	return nil
 }
 
