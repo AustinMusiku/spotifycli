@@ -42,15 +42,27 @@ var nextCmd = &cobra.Command{
 	},
 }
 
+// previousCmd represents the previous command
+var previousCmd = &cobra.Command{
+	Use:   "previous",
+	Short: "Go to previous track",
+	Long:  `Go to the previous track in the current queue.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPrevious()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playCmd)
 	rootCmd.AddCommand(pauseCmd)
 	rootCmd.AddCommand(nextCmd)
+	rootCmd.AddCommand(previousCmd)
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
 	pauseCmd.Aliases = []string{"p"}
 	nextCmd.Aliases = []string{"n"}
+	previousCmd.Aliases = []string{"prev", "b"}
 }
 
 func runPlay(args []string) error {
@@ -155,6 +167,29 @@ func runNext() error {
 	}
 
 	ui.PrintSuccess("Skipped to next track")
+	return nil
+}
+
+func runPrevious() error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	playbackService := api.NewPlaybackService(client)
+	ctx := context.Background()
+
+	deviceID, err := getActiveDevice(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	err = playbackService.Previous(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSuccess("Went to previous track")
 	return nil
 }
 
