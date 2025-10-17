@@ -75,6 +75,17 @@ var shuffleCmd = &cobra.Command{
 	},
 }
 
+// repeatCmd represents the repeat command
+var repeatCmd = &cobra.Command{
+	Use:   "repeat <off|track|context>",
+	Short: "Set repeat mode",
+	Long:  `Set repeat mode: off (no repeat), track (repeat current track), or context (repeat current playlist/album).`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runRepeat(args[0])
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playCmd)
 	rootCmd.AddCommand(pauseCmd)
@@ -82,6 +93,7 @@ func init() {
 	rootCmd.AddCommand(previousCmd)
 	rootCmd.AddCommand(volumeCmd)
 	rootCmd.AddCommand(shuffleCmd)
+	rootCmd.AddCommand(repeatCmd)
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
@@ -275,6 +287,33 @@ func runShuffle(state string) error {
 	}
 
 	ui.PrintSuccess(fmt.Sprintf("Shuffle %s", state))
+	return nil
+}
+
+func runRepeat(state string) error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	if state != "off" && state != "track" && state != "context" {
+		return fmt.Errorf("invalid repeat state: %s (must be 'off', 'track', or 'context')", state)
+	}
+
+	playbackService := api.NewPlaybackService(client)
+	ctx := context.Background()
+
+	deviceID, err := getActiveDevice(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	err = playbackService.SetRepeat(ctx, deviceID, state)
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSuccess(fmt.Sprintf("Repeat set to %s", state))
 	return nil
 }
 
