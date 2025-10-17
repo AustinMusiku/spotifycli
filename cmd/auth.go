@@ -3,8 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"runtime"
 	"time"
 
 	"github.com/AustinMusiku/spotifycli/internal/api"
@@ -80,10 +78,7 @@ func runLogin() error {
 	ui.PrintInfo("Opening browser for authentication...")
 	ui.PrintInfo(fmt.Sprintf("If the browser doesn't open automatically, visit: %s", authURL))
 
-	if err := openBrowser(authURL); err != nil {
-		ui.PrintWarning(fmt.Sprintf("Failed to open browser: %v", err))
-		ui.PrintInfo(fmt.Sprintf("Please visit: %s", authURL))
-	}
+	// TODO: Autonmatically open browser
 
 	ui.PrintInfo("Waiting for authentication...")
 	code, state, err := server.WaitForCallback(5 * time.Minute)
@@ -131,22 +126,4 @@ func runLogout() error {
 
 	ui.PrintSuccess("Successfully logged out from Spotify")
 	return nil
-}
-
-// openBrowser opens the specified URL in the default browser
-func openBrowser(url string) error {
-	var cmd *exec.Cmd
-
-	switch runtime.GOOS {
-	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	case "darwin":
-		cmd = exec.Command("open", url)
-	case "linux":
-		cmd = exec.Command("xdg-open", url)
-	default:
-		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
-	}
-
-	return cmd.Start()
 }
