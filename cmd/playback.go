@@ -22,11 +22,23 @@ var playCmd = &cobra.Command{
 	},
 }
 
+// pauseCmd represents the pause command
+var pauseCmd = &cobra.Command{
+	Use:   "pause",
+	Short: "Pause playback",
+	Long:  `Pause the current playback.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runPause()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playCmd)
+	rootCmd.AddCommand(pauseCmd)
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
+	pauseCmd.Aliases = []string{"p"}
 }
 
 func runPlay(args []string) error {
@@ -85,6 +97,29 @@ func runPlay(args []string) error {
 		}
 	}
 
+	return nil
+}
+
+func runPause() error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	playbackService := api.NewPlaybackService(client)
+	ctx := context.Background()
+
+	deviceID, err := getActiveDevice(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	err = playbackService.Pause(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSuccess("Paused playback")
 	return nil
 }
 
