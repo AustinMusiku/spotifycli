@@ -64,12 +64,24 @@ var volumeCmd = &cobra.Command{
 	},
 }
 
+// shuffleCmd represents the shuffle command
+var shuffleCmd = &cobra.Command{
+	Use:   "shuffle <on|off>",
+	Short: "Toggle shuffle",
+	Long:  `Toggle shuffle mode on or off.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runShuffle(args[0])
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(playCmd)
 	rootCmd.AddCommand(pauseCmd)
 	rootCmd.AddCommand(nextCmd)
 	rootCmd.AddCommand(previousCmd)
 	rootCmd.AddCommand(volumeCmd)
+	rootCmd.AddCommand(shuffleCmd)
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
@@ -235,6 +247,34 @@ func runVolume(volumeStr string) error {
 	}
 
 	ui.PrintSuccess(fmt.Sprintf("Set volume to %d%%", volume))
+	return nil
+}
+
+func runShuffle(state string) error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	shuffle := state == "on"
+	if state != "on" && state != "off" {
+		return fmt.Errorf("invalid shuffle state: %s (must be 'on' or 'off')", state)
+	}
+
+	playbackService := api.NewPlaybackService(client)
+	ctx := context.Background()
+
+	deviceID, err := getActiveDevice(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	err = playbackService.SetShuffle(ctx, deviceID, shuffle)
+	if err != nil {
+		return err
+	}
+
+	ui.PrintSuccess(fmt.Sprintf("Shuffle %s", state))
 	return nil
 }
 
