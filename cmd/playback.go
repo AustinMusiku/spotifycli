@@ -97,7 +97,7 @@ func init() {
 
 	// Add aliases
 	playCmd.Aliases = []string{"p"}
-	pauseCmd.Aliases = []string{"p"}
+	pauseCmd.Aliases = []string{"pa"}
 	nextCmd.Aliases = []string{"n"}
 	previousCmd.Aliases = []string{"prev", "b"}
 }
