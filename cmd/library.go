@@ -36,14 +36,26 @@ var libraryAlbumsCmd = &cobra.Command{
 	},
 }
 
+var libraryTracksCmd = &cobra.Command{
+	Use:   "tracks",
+	Short: "List your saved tracks",
+	Long:  `List all your saved tracks.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		limit, _ := cmd.Flags().GetInt("limit")
+		return runLibraryTracks(limit)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(libraryCmd)
 	libraryCmd.AddCommand(libraryPlaylistsCmd)
 	libraryCmd.AddCommand(libraryAlbumsCmd)
+	libraryCmd.AddCommand(libraryTracksCmd)
 
 	// Add limit flags
 	libraryPlaylistsCmd.Flags().IntP("limit", "l", 50, "Number of results to return")
 	libraryAlbumsCmd.Flags().IntP("limit", "l", 50, "Number of results to return")
+	libraryTracksCmd.Flags().IntP("limit", "l", 50, "Number of results to return")
 }
 
 func runLibraryPlaylists(limit int) error {
@@ -95,6 +107,33 @@ func runLibraryAlbums(limit int) error {
 	fmt.Println("💿 Your Saved Albums:")
 	for i, album := range albums.Albums {
 		fmt.Printf("  %d. %s\n", i+1, ui.FormatAlbum(album.SimpleAlbum))
+	}
+
+	return nil
+}
+
+func runLibraryTracks(limit int) error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	libraryService := api.NewLibraryService(client)
+	ctx := context.Background()
+
+	tracks, err := libraryService.GetSavedTracks(ctx, limit)
+	if err != nil {
+		return err
+	}
+
+	if len(tracks.Tracks) == 0 {
+		ui.PrintInfo("No saved tracks found")
+		return nil
+	}
+
+	fmt.Println("🎵 Your Saved Tracks:")
+	for i, track := range tracks.Tracks {
+		fmt.Printf("  %d. %s\n", i+1, ui.FormatTrack(track.FullTrack))
 	}
 
 	return nil
