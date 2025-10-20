@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/AustinMusiku/spotifycli/internal/api"
 	"github.com/AustinMusiku/spotifycli/internal/ui"
@@ -56,12 +57,23 @@ var libraryShowsCmd = &cobra.Command{
 	},
 }
 
+var librarySaveCmd = &cobra.Command{
+	Use:   "save <URI>",
+	Short: "Save item to library",
+	Long:  `Save a track, album, or show to your library.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return runLibrarySave(args[0])
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(libraryCmd)
 	libraryCmd.AddCommand(libraryPlaylistsCmd)
 	libraryCmd.AddCommand(libraryAlbumsCmd)
 	libraryCmd.AddCommand(libraryTracksCmd)
 	libraryCmd.AddCommand(libraryShowsCmd)
+	libraryCmd.AddCommand(librarySaveCmd)
 
 	// Add limit flags
 	libraryPlaylistsCmd.Flags().IntP("limit", "l", 50, "Number of results to return")
@@ -173,6 +185,47 @@ func runLibraryShows(limit int) error {
 	fmt.Println("🎙️ Your Saved Shows:")
 	for i, show := range shows.Shows {
 		fmt.Printf("  %d. %s\n", i+1, ui.FormatShow(show.SimpleShow))
+	}
+
+	return nil
+}
+
+func runLibrarySave(uri string) error {
+	_, client, err := getAuthenticatedClient()
+	if err != nil {
+		return err
+	}
+
+	libraryService := api.NewLibraryService(client)
+	ctx := context.Background()
+
+	// Parse URI
+	id, _, err := api.ParseURI(uri)
+	if err != nil {
+		return err
+	}
+
+	// Determine content type and save
+	if strings.Contains(uri, ":track:") {
+		err = libraryService.SaveTrack(ctx, id)
+		if err != nil {
+			return err
+		}
+		ui.PrintSuccess("Track saved to library")
+	} else if strings.Contains(uri, ":album:") {
+		err = libraryService.SaveAlbum(ctx, id)
+		if err != nil {
+			return err
+		}
+		ui.PrintSuccess("Album saved to library")
+	} else if strings.Contains(uri, ":show:") {
+		err = libraryService.SaveShow(ctx, id)
+		if err != nil {
+			return err
+		}
+		ui.PrintSuccess("Show saved to library")
+	} else {
+		return fmt.Errorf("unsupported content type for saving: %s", uri)
 	}
 
 	return nil
