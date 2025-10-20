@@ -62,11 +62,20 @@ func runLogin() error {
 		cfg.ClientID = clientID
 	}
 
+	if cfg.Port == "" {
+		cfg.Port = "8080"
+	}
+
+	if cfg.RedirectPath == "" {
+		cfg.RedirectPath = "callback"
+	}
+
 	// Create PKCE auth handler
-	pkceAuth := auth.NewPKCEAuth(cfg.ClientID, cfg.RedirectURI)
+	redirectURI := fmt.Sprintf("http://127.0.0.1:%s/%s", cfg.Port, cfg.RedirectPath)
+	pkceAuth := auth.NewPKCEAuth(cfg.ClientID, redirectURI)
 
 	// Fire up callback server
-	server := auth.NewCallbackServer("8080")
+	server := auth.NewCallbackServer(cfg.Port)
 	if err := server.Start(); err != nil {
 		return fmt.Errorf("failed to start callback server: %w", err)
 	}

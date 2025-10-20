@@ -13,7 +13,8 @@ const configFileName = "spotifycli.json"
 
 type Config struct {
 	ClientID     string `json:"client_id"`
-	RedirectURI  string `json:"redirect_uri"`
+	RedirectPath string `json:"redirect_path"`
+	Port         string `json:"port"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
@@ -38,7 +39,7 @@ func LoadConfig() (*Config, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// Default config
 		return &Config{
-			RedirectURI: "http://127.0.0.1:8080/callback",
+			RedirectPath: "callback",
 		}, nil
 	}
 
@@ -84,6 +85,10 @@ func (c *Config) Save() error {
 	key := os.Getenv("SPOTIFYCLI_KEY")
 	if key == "" {
 		key = generateEncryptionKey()
+	}
+
+	if err := os.Setenv("SPOTIFYCLI_KEY", key); err != nil {
+		return err
 	}
 
 	encCfg := *c

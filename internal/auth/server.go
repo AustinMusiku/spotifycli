@@ -9,6 +9,7 @@ import (
 
 type CallbackServer struct {
 	server    *http.Server
+	addr      string
 	codeChan  chan string
 	stateChan chan string
 	errChan   chan error
@@ -16,6 +17,8 @@ type CallbackServer struct {
 
 func NewCallbackServer(port string) *CallbackServer {
 	return &CallbackServer{
+		// I'm binding explicitly to 127.0.0.1 since spotify does not accept http://localhost URIs
+		addr:      fmt.Sprintf("127.0.0.1:%s", port),
 		codeChan:  make(chan string, 1),
 		stateChan: make(chan string, 1),
 		errChan:   make(chan error, 1),
@@ -27,7 +30,7 @@ func (s *CallbackServer) Start() error {
 	mux.HandleFunc("/callback", s.handleCallback)
 
 	s.server = &http.Server{
-		Addr:    "127.0.0.1:8080", // I'm binding explicitly to 127.0.0.1 since spotify does not accept http://localhost URIs
+		Addr:    s.addr,
 		Handler: mux,
 	}
 
