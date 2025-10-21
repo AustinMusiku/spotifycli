@@ -1,2 +1,4 @@
 scratch.*
 bin
+# Added by goreleaser init:
+dist

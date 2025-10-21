@@ -1,0 +1,60 @@
+version: 2
+
+project_name: spotifycli
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod verify
+
+builds:
+  - id: spotifycli
+    main: .
+    binary: spotifycli
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: spotifycli-archive
+    ids:
+      - spotifycli
+    formats: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{- if eq .Os "darwin" }}macOS
+      {{- else if eq .Os "linux" }}Linux
+      {{- else if eq .Os "windows" }}Windows
+      {{- else }}{{ .Os }}{{ end }}_{{ .Arch }}
+    files:
+      - LICENSE
+      - README.md
+
+changelog:
+  use: github-native
+  sort: desc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^refactor:"
+
+release:
+  github:
+    owner: AustinMusiku
+    name: spotifycli
+  prerelease: auto
+
+announce:
+  skip: true
