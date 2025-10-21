@@ -41,14 +41,32 @@ archives:
       - README.md
 
 changelog:
-  use: github-native
-  sort: desc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
-      - "^refactor:"
+    sort: asc
+    use: git
+    filters:
+      exclude:
+        - '^docs:'
+        - '^test:'
+        - '^chore:'
+        - '^refactor:'
+    groups:
+      - title: "Features"
+        regexp: "^feat"
+        order: 0
+      - title: "Fixes"
+        regexp: "^fix"
+        order: 1
+      - title: "Maintenance"
+        regexp: "^(build|ci|chore)"
+        order: 2
+      - title: "Docs"
+        regexp: "^docs"
+        order: 3
+      - title: "Refactors"
+        regexp: "^refactor"
+        order: 4
+      - title: "Others"
+        order: 99
 
 release:
   github:
