@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -43,8 +43,8 @@ func LoadConfig() (*Config, error) {
 		}, nil
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
+	data, err := os.ReadFile(path)
+	if err != nil && err != io.EOF {
 		return nil, err
 	}
 
@@ -117,7 +117,7 @@ func (c *Config) Save() error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, data, 0600)
+	return os.WriteFile(path, data, 0600)
 }
 
 func (c *Config) IsAuthenticated() bool {
